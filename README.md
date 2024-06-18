@@ -10,7 +10,7 @@
 `!/usr/local/cuda/bin/nvcc --version` <br/>
 `!make`<br/>
 ### ADIM 2: YARDIMCI FONKSİYONLARIN TANIMLANMASI
-`# define helper functions`<br/>
+`# define helper functions(Bu fonksiyon, belirtilen dosya yolundaki görüntüyü okuyup ekranda gösterir.)`<br/>
 `def imShow(path):` <br/>
   `import cv2` <br/>
   `import matplotlib.pyplot as plt` <br/>
@@ -50,6 +50,7 @@ Fotoğraflarımızı 2 şekilde hazırlayabiliriz: <br/>
 `from google.colab import drive`<br/>
 `drive.mount('/content/gdrive')`<br/>
 `# this creates a symbolic link so that now the path /content/gdrive/My\ Drive/ is equal to /mydrive`<br/>
+`#(/content/gdrive/My\ Drive/ yolunu kullanımı kolay olması sebebi ile /mydrive yoluna eşitleriz.)`<br/>
 `!ln -s /content/gdrive/My\ Drive/ /mydrive`<br/>
 `!ls /mydrive`<br/>
 ### ADIM 4: HAZIRLAMIŞ OLDUĞUMUZ VERİ SETİNİ YÜKLEME
@@ -62,7 +63,7 @@ Veri setiniz bir klasör içine alıp zip haline getirerek drive'ımıza yükley
 `# this is where my datasets are stored within my Google Drive (I created a yolov4 folder to store all important files for custom training) `<br/>
 `%cd darknet/`<br/>
 `!ls /mydrive/yolov4`<br/>
-`# copy over both datasets into the root directory of the Colab VM (comment out test.zip if you are not using a validation dataset)`<br/>
+`# Copies the training and test datasets and extracts them to the specified directory.(eğitim ve test dizinlerini kopyalar ve belirtilen dizine çıkarır.)`<br/>
 `!cp /mydrive/yolov4/obj.zip ../`<br/>
 `!cp /mydrive/yolov4/test.zip ../`<br/>
 `# unzip the datasets and their contents so that they are now in /darknet/data/ folder`<br/>
@@ -88,7 +89,10 @@ Config dosyamızda yapmamız gereken değişiklikler:<br/>
 
 6.   filters değişkenlerini de (eğitim yapacağımız sınıf sayısı + 5 )*3 değerine eşitliyoruz <br/>
 
-`# upload the custom .cfg back to cloud VM from Google Drive`
+```
+# #Copies the configuration files and tag name files to the relevant directories.
+#(Yapılandırma dosyalarını ve etiket isim dosyalarını ilgili dizinlere kopyalar.)
+```
 `!cp /mydrive/yolov4/yolov4-obj.cfg ./cfg` <br/>
 **-obj.names ve obj.data**<br/>
 
@@ -110,7 +114,7 @@ valid = data/test.txt
 names = data/obj.names
 backup = /mydrive
 ```
-`# upload the obj.names and obj.data files to cloud VM from Google Drive`<br/>
+`#Training and testing rules are created. (Eğitim ve test dosyalarını oluşturur.)`<br/>
 `!cp /mydrive/yolov4/obj.names ./data`<br/>
 `!cp /mydrive/yolov4/obj.data  ./data`<br/>
 **-Train ve Test Dosyaları**<br/>
@@ -189,8 +193,8 @@ Sıradaki komut ile eğitim başlayacaktır.<br/>
 
 Eğitimimizin süresi veri setinizdeki fotoğraf sayısı, fotoğrafların kalitesi, eğitim yaptığınız nesne sayısı gibi faktörlere göre değişebilir. Modelimizin doğruluğu için loss değerimiz önemlidir. Loss değerimiz ne kadar düşük olursa modelimiz o kadar doğru çalışır. Modelimizi loss değeri azalmayı durdurana kadar çalıştırıp veri setimize göre mümkün olan en doğru modeli eğitebiliriz. 
 ```
-# train your custom detector! (uncomment %%capture below if you run into memory issues or your Colab is crashing)
-# %%capture
+```#Trains the model with the specified data and configuration files. The -dont_show parameter is used to not show graphics during training, while -map provides performance measurements during the training process.
+#(Modeli belirtilen veri ve yapılandırma dosyalarıyla eğitir. -dont_show parametresi, eğitim sırasında grafikleri göstermemek için kullanılır, -map ise eğitim sürecindeki performans ölçümlerini sağlar.)```
 !./darknet detector train data/obj.data cfg/yolov4-obj.cfg yolov4.conv.137 -dont_show -map
 
 ```
@@ -199,25 +203,35 @@ Modelimizi eğittikten sonra eğitim sırasında loss değerimizin nasıl deği�
 ```
 # eğitimimize ait grafiğimiz.
 imShow('chart.png')
-# eğitime kaldığımız yerden devam edebiliriz.
+#We can continue education from where we left off.(# eğitime kaldığımız yerden devam edebiliriz.)
+
 !./darknet detector train data/obj.data cfg/yolov4-obj.cfg /mydrive/yolov4/backup/yolov4-obj_last.weights -dont_show
 ```
 ### ADIM 7: EĞİTTİĞİMİZ MODELİMİZİ KULLANALIM
 Eğitimimiz tamamlandı, şimdi istediğimiz fotoğraflar üzerinde tanıma yapabiliriz.
+`#Runs the command that evaluates the performance of the model.(#Modelin performansını değerlendiren komutu çalıştırır.)`
+
 `!./darknet detector map data/obj.data cfg/yolov4-obj.cfg /mydrive/yolov4/backup/yolov4-obj_best.weights `<br/>
 ### ADIM 8: Modelimizi Çalıştıralım!!!
 ```
-# need to set our custom cfg to test mode 
+# need to set our custom cfg to test mode.(#cfy'yi test moduna ayarlarız.)
 %cd cfg
 !sed -i 's/batch=64/batch=1/' yolov4-obj.cfg
 !sed -i 's/subdivisions=16/subdivisions=1/' yolov4-obj.cfg
 %cd ..
 ```
 ```
-# run your custom detector with this command (upload an image to your google drive to test, thresh flag sets accuracy that detection must be in order to show it)
+#It performs object detection on the test image and displays the results.#(Test görüntüsü üzerinde nesne algılama işlemi yapar ve sonuçları gösterir.)
 !./darknet detector test data/obj.data cfg/yolov4-obj.cfg /mydrive/yolov4/backup/yolov4-obj_last.weights /mydrive/images/car4.jpg -thresh 0.3
 imShow('predictions.jpg')
 ```
+Bu projede "generate_train.py" test verilerimizi listeye atan, genellikle eğitim veri setinin yol bilgilerini içeren bir metin dosyası örneğin; train.txt oluşturmak için kullanılır.
+
+"generate_test.py" train verilerimizi listeyen atan ve YOLO modeli için test dosyalarının otomatik olarak oluşturulmasına yardımcı olur. Bu dosya, genellikle test veri setinin yol bilgilerini içeren bir metin dosyası örneğin;test.txt oluşturmak için kullanılır.
+
+obj.data dosyası,YOLO nesne algılama modeli eğitimi ve testi için gerekli olan bilgileri içeren bir yapılandırma dosyasıdır. Bu dosya, eğitim ve test sürecinde kullanılan veri yollarını ve diğer önemli parametreleri tanımlar.
+
+obj.names dosyası, YOLO modelinin eğitim ve test sürecinde kullandığı sınıf (etiket) isimlerini içeren bir dosyadır. Bu dosya, modelin tanıyacağı nesne sınıflarının isimlerini belirtir.
 
 
 

@@ -1,5 +1,6 @@
 ## Projenin kodlarına [buraya tıklayarak]( https://colab.research.google.com/drive/1CmRu6zMATy0fLbWoL82RBzdnqkHzAt7R?usp=sharing) ulaşabilirsiniz.
 # TrafficSign_Detection
+[Tensorflow]
 ### 1.ADIM = DARKNET KLONLAMA VE KURULUMU
 `!git clone https://github.com/AlexeyAB/darknet` <br/>
 `%cd darknet`<br/>
